@@ -68,9 +68,21 @@ const Navigation = ({ web3Handler, account, setActivePage }) => {
         </span>
         <span
           className="cursor-pointer text-white hover:underline"
+          onClick={() => handleClick("LinkNFT")}
+        >
+          Link NFT
+        </span>
+        <span
+          className="cursor-pointer text-white hover:underline"
           onClick={() => handleClick("TransactionHistory")}
         >
           Transaction History
+        </span>
+        <span
+          className="cursor-pointer text-white hover:underline"
+          onClick={() => handleClick("GiftNFT")}
+        >
+          Gift NFT
         </span>
         {/* <span className="cursor-pointer text-white hover:underline" onClick={() => handleClick('ClaimNFT')}>Claim NFT</span>
         <span className="cursor-pointer text-white hover:underline" onClick={() => handleClick('UpdateNFT')}>Update NFT</span> */}

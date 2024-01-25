@@ -1,0 +1,25 @@
+.coll {
+    position: relative;
+  margin-top: 70px;
+    overflow: visible;
+    z-index: 1;
+  }
+  
+  .coll::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    top: 50%;
+    transform: translateY(-0%);
+    /* overflow: hidden; */
+    z-index: -1;
+    opacity: 0.3;
+    filter: blur(2px);
+    background: linear-gradient(to top right, #949c96, #1ac583);
+    clip-path: polygon(74.1% 44.1%, 100% 61.6%, 37.5% 26.9%, 25.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 25.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%);
+    -webkit-transform: translateY(-0%);
+    -moz-transform: translateY(-0%);
+    -ms-transform: translateY(-0%);
+    -o-transform: translateY(-0%);
+    -webkit-filter: blur(2px);
+}

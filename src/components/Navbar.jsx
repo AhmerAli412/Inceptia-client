@@ -351,6 +351,7 @@ import { ethers } from "ethers";
 import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton, useUser } from '@clerk/clerk-react';
 import { inceptiaContractAddress, inceptiaAbi, rewardsContractAddress, rewardsAbi } from "../contract/index";
 import '../components/Navbar.css';
+import { ToastContainer, toast } from "react-toastify";
 
 function Navbar() {
   const { user } = useUser();
@@ -363,15 +364,42 @@ function Navbar() {
   const [account, setAccount] = useState(null);
   const [ethBalance, setEthBalance] = useState("");
   const [erc20Balance, setErc20Balance] = useState("");
+  const [isModalOpen, setModalOpen] = useState(true);
+
 
   useEffect(() => {
     const path = window.location.pathname.split("/").pop();
     const target = $(`#navbarSupportedContent ul li a[href="${path}"]`);
     setActiveTab(target.parent().index());
+
+    // Check if Metamask is connected
+    const isMetamaskConnected = document.cookie.includes("metamaskConnected=true");
+    if (isMetamaskConnected) {
+      // Metamask is connected, close the modal if open
+      closeModal();
+    }
+
+    // Check if the modal is closed without connecting Metamask
+    const isModalClosed = document.cookie.includes("modalClosed=true");
+    if (!isMetamaskConnected && !isModalClosed) {
+      openModal();
+    }
   }, []);
 
   const handleTabClick = (index) => {
     setActiveTab(index);
+  };
+
+  const openModal = () => {
+   
+      setModalOpen(true);
+   
+  };
+  const closeModal = () => {
+    setModalOpen(false);
+
+    // Set cookie to indicate that the modal is closed
+    document.cookie = "modalClosed=true; max-age=" + 2 * 60 * 60; // 2 hours
   };
 
   const handleMetamaskConnect = async () => {
@@ -433,19 +461,22 @@ function Navbar() {
           erc20Balance: erc20BalanceInteger,
         };
       } else {
-        alert("Please install MetaMask");
+        // alert("Please install MetaMask");
+        toast("Please install metamask");
       }
     } catch (error) {
       console.error("Error connecting wallet:", error);
-      throw error; // Rethrow the error to be caught in the calling function
+      throw error;
     }
   };
   
 
   console.log(erc20Balance)
+  console.log(user);
 
   const handleMetamaskConnectAndStoreUserData = async () => {
     try {
+      document.cookie = "metamaskConnected=true; max-age=" + 2 * 60 * 60; // 2 hours
       const { metamaskAddress, erc20Balance } = await handleMetamaskConnect();
   
       fetch('https://inceptia.onrender.com/saveUserData', {
@@ -457,6 +488,7 @@ function Navbar() {
           userId: user.id,
           firstName: user.firstName,
           lastName: user.lastName,
+          username: user.username,
           metamaskAddress,
           erc20Balance,
         }),
@@ -468,23 +500,15 @@ function Navbar() {
         .catch((error) => {
           console.error('Error storing user data:', error);
         });
-    } catch (error) {
-      console.error('Error connecting wallet:', error);
-    }
-  };
-  
+      } catch (error) {
+        console.error("Error connecting wallet:", error);
+        toast.error("Error connecting wallet");
+      }
+    };
   
   return (
-    <nav className="navbar navbar-expand-custom navbar-mainbg">
-      <button
-        className="navbar-toggler"
-        type="button"
-        aria-controls="navbarSupportedContent"
-        aria-expanded="false"
-        aria-label="Toggle navigation"
-      >
-        <i className="fas fa-bars text-white"></i>
-      </button>
+    <nav className="navbar navbar-expand-custom navbar-mainbg relative z-20">
+     
       <div className="collapse navbar-collapse" id="navbarSupportedContent">
         <ul className="navbar-nav ml-auto">
           <li className={`nav-item ${activeTab === 0 ? "active" : ""}`}>
@@ -505,38 +529,33 @@ function Navbar() {
             </Link>
           </li>
 
-          <li className="nav-item">
-          
-            {/* <input type="text" value={metamaskAddress} readOnly /> */}
-            <a className="nav-item" onClick={handleMetamaskConnectAndStoreUserData}>Connect to Metamask</a>
+          <li className={`nav-item ${activeTab === 3 ? "active" : ""}`}>
+            <Link className="nav-link" to="/about" onClick={() => handleTabClick(2)}>
+              <i className="fas fa-cog"></i>About us
+            </Link>
           </li>
 
-          {/* <li className={`nav-item ${activeTab === 3 ? "active" : ""}`}>
-            <Link className="nav-link" to="/swapping" onClick={() => handleTabClick(3)}>
-              <i className="fas fa-exchange-alt"></i>Swapping
-            </Link>
+          {/* <li className="nav-item">
+          
+           
+            <a className="nav-item" onClick={handleMetamaskConnectAndStoreUserData}>Connect to Metamask</a>
           </li> */}
-
-          <li className={`nav-item ${activeTab === 3 ? "active" : ""}`}>
+ 
+        
+          <li className={`nav-item ${activeTab === 4 ? "active" : ""}`}>
             <a className="nav-link" href="https://testnets.opensea.io/account" target="_blank">
               <i className="fas fa-exchange-alt">OpenSea</i>
             </a>
           </li>
 
           <li className="nav-item b">
-            <Link className="nav-link" to="/claimNFT">
+            <Link className="nav-link" to="/marketplace">
               <i className="far fa-envelope"></i>ClaimNFT
             </Link>
           </li>
 
           <div className="text-container1">
             <SignedIn className="signed-in">
-              {user && user.web3Wallets && user.web3Wallets.length > 0 && (
-                <div className="flex-container">
-                  <div className="address">{user.web3Wallets[0].web3Wallet.substring(0, 8)}</div>
-                  <div className="user-account"></div>
-                </div>
-              )}
               <UserButton afterSignOutUrl={window.location.href} />
             </SignedIn>
             <SignedOut>
@@ -544,11 +563,87 @@ function Navbar() {
             </SignedOut>
           </div>
 
+          
+
+          <div>
+          {!metamaskAddress && user &&  (
+          <div>
+      {isModalOpen && (
+        <div
+          id="default-modal"
+          tabIndex="-1"
+          aria-hidden="true"
+          className="fixed inset-0 flex items-center justify-center w-full h-full bg-black bg-opacity-50"
+          onClick={closeModal}
+        >
+          <div className="relative p-4 w-full max-w-2xl max-h-full ">
+            {/* Modal content */}
+            <div className="relative bg-bgg rounded-lg shadow">
+              {/* Modal header */}
+              <div className="flex items-center justify-between p-4 md:p-5 border-b rounded-t dark:border-gray-600">
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                  MetaMask Coonection
+                </h3>
+                <button
+                  type="button"
+                  className="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white"
+                  data-modal-hide="default-modal"
+                >
+                  <svg
+                    className="w-3 h-3"
+                    aria-hidden="true"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 14 14"
+                  >
+                    <path
+                      stroke="currentColor"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"
+                    />
+                  </svg>
+                  <span className="sr-only">Close modal</span>
+                </button>
+              </div>
+             
+              <div className="p-4 md:p-5 space-y-4">
+                {/* <p className="text-base leading-relaxed text-gray-500 dark:text-gray-400">
+                  With less than a month to go before the European Union enacts new consumer privacy laws for its citizens, companies around the world are updating their terms of service agreements to comply.
+                </p> */}
+                <p className="text-base leading-relaxed text-gray-500 dark:text-gray-400">
+                 Please Connect your MetaMask Account 
+                </p>
+              </div>
+              {/* Modal footer */}
+              <div className="flex items-center p-4 md:p-5 border-t border-gray-200 rounded-b dark:border-gray-600">
+                <button
+                  data-modal-hide="default-modal"
+                  type="button"
+                  className="text-white bg-green-500 hover:bg-green-800 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center "
+                >
+                   <a className="nav-item" onClick={handleMetamaskConnectAndStoreUserData}>Connect to Metamask</a>
+                </button>
+              
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    
+    </div>
+    
+    )}
+
+    </div>
+
           <li className="nav-item">
             {/* <MetamaskForm onMetamaskConnect={handleMetamaskConnect} /> */}
           </li>
         </ul>
       </div>
+      <ToastContainer />
     </nav>
   );
 }

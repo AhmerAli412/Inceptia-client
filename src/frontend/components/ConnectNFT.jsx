@@ -3,14 +3,13 @@ import { ethers } from "ethers";
 import Footer from "../../components/Footer";
 import { ToastContainer, toast } from "react-toastify";
 
-export default function MyPurchases({ marketplace, nft, account }) {
+export default function ConnectNFT({ marketplace, nft, account }) {
   const [loading, setLoading] = useState(true);
   const [purchases, setPurchases] = useState([]);
   const [newPrice, setNewPrice] = useState("");
   const [relistItemId, setRelistItemId] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [LinkedNFT, setLinkedNFT] = useState(0);
-
   const [NFTContract, setNFTContract] = useState(null);
 
   const loadPurchasedItems = async () => {
@@ -22,6 +21,7 @@ export default function MyPurchases({ marketplace, nft, account }) {
       console.log(intIds);
       const purchases = await Promise.all(
         nfts.map(async (NFT) => {
+          console.log(NFT);
           const tokenId = NFT.tokenId.toNumber();
           const isListedForSale = intIds.includes(tokenId);
           const totalPrice = "0".toString();
@@ -30,8 +30,7 @@ export default function MyPurchases({ marketplace, nft, account }) {
           const response = await fetch(uri);
           const metadata = await response.json();
           const isLinked = NFT.isLinked;
-
-          console.log("The level is " + NFT.level.toNumber());
+          console.log(isLinked);
           return {
             itemId: NFT.tokenId.toNumber(),
             tokenId: 1,
@@ -42,7 +41,6 @@ export default function MyPurchases({ marketplace, nft, account }) {
             image: metadata.image,
             islisted: isListedForSale,
             isLinked: isLinked,
-            level: NFT.level.toNumber(),
           };
         })
       );
@@ -50,53 +48,69 @@ export default function MyPurchases({ marketplace, nft, account }) {
       setPurchases(purchases);
     } catch (error) {
       console.error("Error loading purchased items:", error);
+      toast.error("Error loading purchased items. Please try again later.");
     }
   };
 
-  const handleRelistClick = (itemId) => {
+  const handleLinkClick = (itemId) => {
     setRelistItemId(itemId);
     setIsModalOpen(true);
   };
 
-  const handleRelist = async (itemId) => {
+  const handleLink = async (itemId) => {
+    console.log(itemId);
     try {
-      if (!newPrice || isNaN(newPrice) || newPrice <= 0) {
-        console.error("Invalid new price");
-        toast.error("Invalid new price");
-        return;
-      }
-
-      /*  // await marketplace.relistItem(relistItemId, newPrice);
-      await (await nft.setApprovalForAll(marketplace.address, true)).wait();
-
-      await (
-        await marketplace.makeItem(nft.address, relistItemId, newPrice)
-      ).wait(); */
-
-      const approvalPromise = nft.setApprovalForAll(marketplace.address, true);
-      const makeItemPromise = marketplace.makeItem(
-        nft.address,
-        relistItemId,
-        newPrice
-      );
-
-      await Promise.all([approvalPromise, makeItemPromise]);
-
       setRelistItemId(null);
+      const transaction = await nft.LinkNFT(relistItemId);
+      await transaction.wait(); // Wait for the transaction to be mined
 
       setNewPrice(""); // Clear the input field
       setIsModalOpen(false);
-      toast.success("NFT listed successfully");
-      // You may want to add the relisted item to another component, like "My Listed Items" or "Home," as needed.
+      // You may want to add the linked item to another component or update state as needed.
+      toast.success("NFT linked successfully!");
     } catch (error) {
-      console.error("Error listing the NFT:", error);
-      toast.error("Error listing NFT");
+      console.error("Error connecting the NFT:", error);
+      toast.error("Error linking NFT. Please try again later.");
+      // You might want to handle the error appropriately (e.g., display an error message to the user)
     }
   };
 
   useEffect(() => {
     loadPurchasedItems();
   }, []);
+
+  useEffect(() => {
+    const getLinkedNFT = async () => {
+      console.log("NFT contract ", NFTContract);
+      if (NFTContract && account) {
+        try {
+          const LinkedNFT = await NFTContract.getLinkedNFT(account);
+          console.log("Linked NFT", LinkedNFT);
+  
+          // Extract the level from BigNumber
+          const level = LinkedNFT.level.toNumber();
+          console.log("Level is", level);
+  
+          setLinkedNFT(level);
+  
+          const uri = LinkedNFT.tokenURI;
+          const response = await fetch(uri);
+          const metadata = await response.json();
+          // setMintedTokenURI(metadata.image);
+        } catch (error) {
+          toast.error("Could not get linked NFT");
+          console.error(error);
+        }
+      }
+    };
+  
+    getLinkedNFT();
+  }, [account, NFTContract]);
+  
+  console.log(LinkedNFT.level);
+
+
+  
 
   if (loading) {
     return (
@@ -110,7 +124,7 @@ export default function MyPurchases({ marketplace, nft, account }) {
     <>
       <div className="container mt-14 mb-10">
         <main style={{ padding: "1rem 0" }}>
-          <h2 className="text-white text-2xl">Owned NFTs</h2>
+          <h2 className="text-white text-2xl">Link a NFT to your Profile</h2>
         </main>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 ml-10">
           {purchases.length > 0 ? (
@@ -131,26 +145,30 @@ export default function MyPurchases({ marketplace, nft, account }) {
                   <p className="text-gray-300 text-sm mt-2">
                     {item.description}
                   </p>
+                  <p className="text-gray-300 text-sm mt-2">
+                    NFT Level
+                  {LinkedNFT !== undefined && (
+    <div className="level-badge">{LinkedNFT}</div>
+  )}
+                  </p>
+                 
                   <div className="flex justify-between items-center mt-4">
-                    <p className="text-white text-sm font-semibold">
-                      {item.totalPrice} INC
-                    </p>
+                    <p className="text-white text-sm font-semibold"></p>
 
-                    <h4 className="text-white text-xl font-semibold">
-                      <div className="level-badge">Level {item.level}</div>
-                    </h4>
-                    {item.islisted || item.isLinked || item.level < 6 ? (
+                    {item.islisted || item.isLinked ? (
                       ""
                     ) : (
                       <button
-                        onClick={() => handleRelistClick(item.itemId)}
+                        onClick={() => {
+                          handleLinkClick(item.itemId);
+                        }}
                         className="bg-blue-500 text-white rounded-md px-4 py-2 text-sm hover:bg-blue-700 transition duration-300"
                         style={{
                           background:
                             "linear-gradient(90deg, rgba(50,168,56,1) 0%, rgba(50,168,56,1) 50%, rgba(87,194,33,1) 50%, rgba(87,194,33,1) 100%)",
                         }}
                       >
-                        List
+                        Link to Profile
                       </button>
                     )}
                   </div>
@@ -181,39 +199,21 @@ export default function MyPurchases({ marketplace, nft, account }) {
                 <div className="sm:flex sm:items-start">
                   <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
                     <h3 className="text-lg leading-6 font-medium text-white">
-                      List NFT
+                      Link NFT to profile
                     </h3>
-                    <div className="mt-2">
-                      <label
-                        htmlFor="newPrice"
-                        className="block text-sm font-medium text-white"
-                      >
-                        Enter New Price (INC)
-                      </label>
-                      <div className="mt-1">
-                        <input
-                          type="number"
-                          id="newPrice"
-                          placeholder="Enter new price"
-                          value={newPrice}
-                          onChange={(e) => setNewPrice(e.target.value)}
-                          className="block w-full p-1 mt-5 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                        />
-                      </div>
-                    </div>
                   </div>
                 </div>
               </div>
               <div className="bg-gray-800  px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
                 <button
-                  onClick={handleRelist}
+                  onClick={handleLink}
                   className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm"
                   style={{
                     background:
                       "linear-gradient(90deg, rgba(50,168,56,1) 0%, rgba(50,168,56,1) 50%, rgba(87,194,33,1) 50%, rgba(87,194,33,1) 100%)",
                   }}
                 >
-                  Confirm list
+                  Confirm Link
                 </button>
                 <button
                   onClick={() => setIsModalOpen(false)} // Close the modal if Cancel is clicked

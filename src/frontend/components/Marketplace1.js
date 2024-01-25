@@ -16,6 +16,9 @@ import ClaimNFT from "./ClaimNFT";
 import UpdateNFT from "./UpdateNFT";
 import { inceptiaContractAddress, inceptiaAbi } from "../../contract/index";
 import Navbar from "../../components/Navbar";
+import ConnectNFT from "./ConnectNFT";
+import GiftNFT from "./GiftNFT";
+import { toast } from "react-toastify";
 
 function Marketplace1() {
   const [loading, setLoading] = useState(true);
@@ -51,6 +54,7 @@ function Marketplace1() {
         const storedNFTs = JSON.parse(localStorage.getItem("userNFTs")) || [];
         setUserNFTs(storedNFTs);
       } else {
+        toast("Please install metamask");
         alert("MetaMask not found. Please install it to continue.");
       }
     };
@@ -169,7 +173,26 @@ function Marketplace1() {
               />
             )}
             {activePage === "TransactionHistory" && (
-              <TransactionHistory marketplace={marketplace} account={account} />
+              <TransactionHistory
+                marketplace={marketplace}
+                nft={nft}
+                account={account}
+              />
+            )}
+            {activePage === "LinkNFT" && (
+              <ConnectNFT
+                marketplace={marketplace}
+                nft={nft}
+                account={account}
+              />
+            )}
+            {activePage === "GiftNFT" && (
+              <GiftNFT
+                nft={nft}
+                inceptia={inceptia}
+                marketplace={marketplace}
+                account={account}
+              />
             )}
           </>
         )}

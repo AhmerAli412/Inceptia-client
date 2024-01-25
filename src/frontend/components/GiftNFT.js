@@ -3,15 +3,12 @@ import { ethers } from "ethers";
 import Footer from "../../components/Footer";
 import { ToastContainer, toast } from "react-toastify";
 
-export default function MyPurchases({ marketplace, nft, account }) {
+export default function GiftNFT({ marketplace, nft, account }) {
   const [loading, setLoading] = useState(true);
   const [purchases, setPurchases] = useState([]);
-  const [newPrice, setNewPrice] = useState("");
+  const [address, setAddress] = useState("");
   const [relistItemId, setRelistItemId] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [LinkedNFT, setLinkedNFT] = useState(0);
-
-  const [NFTContract, setNFTContract] = useState(null);
 
   const loadPurchasedItems = async () => {
     try {
@@ -31,7 +28,6 @@ export default function MyPurchases({ marketplace, nft, account }) {
           const metadata = await response.json();
           const isLinked = NFT.isLinked;
 
-          console.log("The level is " + NFT.level.toNumber());
           return {
             itemId: NFT.tokenId.toNumber(),
             tokenId: 1,
@@ -42,7 +38,6 @@ export default function MyPurchases({ marketplace, nft, account }) {
             image: metadata.image,
             islisted: isListedForSale,
             isLinked: isLinked,
-            level: NFT.level.toNumber(),
           };
         })
       );
@@ -60,37 +55,43 @@ export default function MyPurchases({ marketplace, nft, account }) {
 
   const handleRelist = async (itemId) => {
     try {
-      if (!newPrice || isNaN(newPrice) || newPrice <= 0) {
-        console.error("Invalid new price");
-        toast.error("Invalid new price");
+      if (!ethers.utils.isAddress(address)) {
+        console.error("Invalid Ethereum address");
+        toast.error("Invalid Ethereum address");
+        // You might want to provide user feedback about the invalid address.
         return;
       }
+      // Get the correct itemId from the state (relistItemId)
+      const giftId = relistItemId;
 
+      // Ensure itemId is not null or undefined
+      if (giftId == null) {
+        console.error("Invalid itemId");
+        toast.error("Invalid itemId");
+        return;
+      }
+      //////Do something here
+      await Promise.all([
+        nft.transferFrom(account, address, giftId),
+        nft.addNFTToOwnerList(address, giftId),
+        nft.removeNFTFromOwnerList(account, giftId),
+      ]);
       /*  // await marketplace.relistItem(relistItemId, newPrice);
-      await (await nft.setApprovalForAll(marketplace.address, true)).wait();
+ await (await nft.setApprovalForAll(marketplace.address, true)).wait();
 
-      await (
-        await marketplace.makeItem(nft.address, relistItemId, newPrice)
-      ).wait(); */
-
-      const approvalPromise = nft.setApprovalForAll(marketplace.address, true);
-      const makeItemPromise = marketplace.makeItem(
-        nft.address,
-        relistItemId,
-        newPrice
-      );
-
-      await Promise.all([approvalPromise, makeItemPromise]);
+ await (
+   await marketplace.makeItem(nft.address, relistItemId, newPrice)
+ ).wait(); */
 
       setRelistItemId(null);
 
-      setNewPrice(""); // Clear the input field
+      setAddress(""); // Clear the input field
       setIsModalOpen(false);
-      toast.success("NFT listed successfully");
+      toast.success("NFT gifted successfully");
       // You may want to add the relisted item to another component, like "My Listed Items" or "Home," as needed.
     } catch (error) {
       console.error("Error listing the NFT:", error);
-      toast.error("Error listing NFT");
+      toast.error("Error gifting the NFT. Please try again later.");
     }
   };
 
@@ -110,7 +111,7 @@ export default function MyPurchases({ marketplace, nft, account }) {
     <>
       <div className="container mt-14 mb-10">
         <main style={{ padding: "1rem 0" }}>
-          <h2 className="text-white text-2xl">Owned NFTs</h2>
+          <h2 className="text-white text-2xl">Gift a NFT to your Friend</h2>
         </main>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 ml-10">
           {purchases.length > 0 ? (
@@ -136,10 +137,7 @@ export default function MyPurchases({ marketplace, nft, account }) {
                       {item.totalPrice} INC
                     </p>
 
-                    <h4 className="text-white text-xl font-semibold">
-                      <div className="level-badge">Level {item.level}</div>
-                    </h4>
-                    {item.islisted || item.isLinked || item.level < 6 ? (
+                    {item.islisted || item.isLinked ? (
                       ""
                     ) : (
                       <button
@@ -150,7 +148,7 @@ export default function MyPurchases({ marketplace, nft, account }) {
                             "linear-gradient(90deg, rgba(50,168,56,1) 0%, rgba(50,168,56,1) 50%, rgba(87,194,33,1) 50%, rgba(87,194,33,1) 100%)",
                         }}
                       >
-                        List
+                        Gift
                       </button>
                     )}
                   </div>
@@ -159,7 +157,7 @@ export default function MyPurchases({ marketplace, nft, account }) {
             ))
           ) : (
             <main style={{ padding: "1rem 0" }}>
-              <h2 className="text-white text-2xl">No purchases</h2>
+              <h2 className="text-white text-2xl">No Owned NFT</h2>
             </main>
           )}
         </div>
@@ -181,22 +179,22 @@ export default function MyPurchases({ marketplace, nft, account }) {
                 <div className="sm:flex sm:items-start">
                   <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
                     <h3 className="text-lg leading-6 font-medium text-white">
-                      List NFT
+                      Gift NFT
                     </h3>
                     <div className="mt-2">
                       <label
                         htmlFor="newPrice"
                         className="block text-sm font-medium text-white"
                       >
-                        Enter New Price (INC)
+                        Enter an address
                       </label>
                       <div className="mt-1">
                         <input
-                          type="number"
+                          type="text"
                           id="newPrice"
-                          placeholder="Enter new price"
-                          value={newPrice}
-                          onChange={(e) => setNewPrice(e.target.value)}
+                          placeholder="Enter an address"
+                          value={address}
+                          onChange={(e) => setAddress(e.target.value)}
                           className="block w-full p-1 mt-5 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                         />
                       </div>
@@ -213,7 +211,7 @@ export default function MyPurchases({ marketplace, nft, account }) {
                       "linear-gradient(90deg, rgba(50,168,56,1) 0%, rgba(50,168,56,1) 50%, rgba(87,194,33,1) 50%, rgba(87,194,33,1) 100%)",
                   }}
                 >
-                  Confirm list
+                  Confirm Gift
                 </button>
                 <button
                   onClick={() => setIsModalOpen(false)} // Close the modal if Cancel is clicked

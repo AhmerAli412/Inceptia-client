@@ -1,10 +1,14 @@
 .parent {
   width: 90%;
   margin: auto;
-  margin-top: 10px;
+  /* margin-top: 60px; */
   max-width: 100%; /* Adjusted to make it responsive */
   overflow: hidden; /* Prevents horizontal overflow */
   position: relative;
+  padding-top: 20px;
+  height: 200px;
+  /* padding-bottom: 10px; */
+  /* padding-left: 20px; */
 }
 
 .images-row {
@@ -21,7 +25,7 @@
 }
 
 .image11 img {
-  height: auto; /* Automatically adjust height while maintaining aspect ratio */
+  height: 180px; /* Automatically adjust height while maintaining aspect ratio */
   max-width: 100%; /* Ensure image doesn't exceed container width */
   width: 100%; /* Ensure image takes full width of parent */
 }

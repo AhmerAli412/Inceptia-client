@@ -111,23 +111,11 @@
 
 // export default TransactionHistory;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 import { useEffect, useState } from "react";
 import { ethers } from "ethers";
 
-function TransactionHistory({ marketplace, account }) {
+function TransactionHistory({ marketplace, account, nft }) {
+  console.log(nft);
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -170,16 +158,24 @@ function TransactionHistory({ marketplace, account }) {
           const itemId = eventData.itemId.toNumber();
 
           const item = await getItemDetails(itemId);
+          const id = eventData.tokenId.toNumber();
 
+          const itemNFT = await nft.getNFTById(id);
+          const uri = itemNFT.tokenURI;
+
+          const response = await fetch(uri);
+          const metadata = await response.json();
+          console.log(metadata);
           return {
             transactionType: event.name === "Bought" ? "Purchase" : "Sale",
             itemId,
             tokenId: eventData.tokenId.toNumber(),
+
             totalPrice: await marketplace.getTotalPrice(itemId),
-            price: ethers.utils.formatEther(eventData.price),
-            name: item.name,
-            description: item.description,
-            image: item.image,
+            price: eventData.price,
+            name: metadata.name,
+            description: metadata.description,
+            image: metadata.image,
           };
         })
       );
@@ -199,9 +195,10 @@ function TransactionHistory({ marketplace, account }) {
     const item = await marketplace.items(itemId);
     // Replace this with fetching item details based on your contract structure
     return {
-      name: "Item Name",
+      name: item.name,
       description: "Item Description",
-      image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRDs2acvSCGAiraHEPWECE5F0BrndQUlI0KjA&usqp=CAU",
+      image:
+        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRDs2acvSCGAiraHEPWECE5F0BrndQUlI0KjA&usqp=CAU",
     };
   };
 
@@ -243,7 +240,11 @@ function TransactionHistory({ marketplace, account }) {
               <td>{transaction.totalPrice.toString()} ETH</td>
               <td>{transaction.price.toString()} ETH</td>
               <td>{transaction.name}</td>
-              <td>{transaction.description}</td>
+              <td>
+                {transaction.description.length > 5
+                  ? transaction.description.slice(0, 5) + "..."
+                  : transaction.description}
+              </td>
               <td>
                 <img
                   src={transaction.image}
@@ -254,7 +255,6 @@ function TransactionHistory({ marketplace, account }) {
             </tr>
           ))}
         </tbody>
-
       </table>
     </div>
   );

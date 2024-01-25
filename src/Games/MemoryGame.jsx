@@ -9,12 +9,20 @@ import {
   inceptiaContractAddress,
 } from "../contract/index";
 import { ethers } from "ethers";
-import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton, useUser } from '@clerk/clerk-react';
+import {
+  SignedIn,
+  SignedOut,
+  SignInButton,
+  SignUpButton,
+  UserButton,
+  useUser,
+} from "@clerk/clerk-react";
 import { Dialog, Transition } from "@headlessui/react";
 import { Fragment } from "react";
-import { Link } from "react-router-dom";
-import Navbar from '../components/Navbar'
-import Footer from '../components/Footer'
+import { Link, useNavigate } from "react-router-dom";
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
+// import { useUser } from "@clerk/clerk-react";
 
 // Separate Card component
 function Card({ card, index, flippedToFront, onClick }) {
@@ -26,17 +34,17 @@ function Card({ card, index, flippedToFront, onClick }) {
   };
   return (
     <div
-      className={`card-outer ${flippedToFront ? "flipped" : ""}`}
-      onClick={() => onClick(index)}
-    >
-      <div className="card">
-        <div className="front">
-          <img src={card} alt="" />
-        </div>
-        <div className="back" />
+    className={`card-outer ${flippedToFront ? "flipped" : ""}`}
+    onClick={() => onClick(index)}
+  >
+    <div className="card">
+      <div className="front">
+        <img src={card} alt="" />
       </div>
+      <div className="back" />
     </div>
-  );
+  </div>
+);
 }
 
 function MemoryGame(props) {
@@ -57,9 +65,12 @@ function MemoryGame(props) {
   const { user } = useUser();
   const [score, setScore] = useState(null);
   const [showBalanceModal, setShowBalanceModal] = useState(false);
-  const [timer, setTimer] = useState(30); // 30-second timer
+  const [timer, setTimer] = useState(120); // 2 minutes timer
   const [isGameOver, setIsGameOver] = useState(false);
-
+  const [initiateTransaction, setInitiateTransaction] = useState(false);
+  const [isLost, setIsLost] = useState(false);
+  const navigate = useNavigate();
+  // const { user } = useUser();
   // Separate function to reset the game
   function resetGame() {
     // setCards(shuffle([...Images, ...Images]));
@@ -68,30 +79,64 @@ function MemoryGame(props) {
     setClicks(0);
   }
 
+  //   // Example in Game 1 component
+  // async function handleGameWon() {
+  //   console.log("Game 1 - userId:", user.id);
+
+  //   try {
+  //     const response = await fetch('https://inceptia.onrender.com/incrementWinCount', {
+  //       method: 'POST',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //       },
+  //       body: JSON.stringify({ userId: user.id, gameNumber: 1 }),
+  //     });
+
+  //     const data = await response.json();
+  //     console.log("Game 1 - Server Response:", data);
+  //   } catch (error) {
+  //     console.error('Game 1 - Error updating win count on the server:', error);
+  //   }
+
+  //   // Open the modal
+  //   openModal();
+  // }
+
   // Example in Game 1 component
-async function handleGameWon() {
-  console.log("Game 1 - userId:", user.id);
+  async function handleGameWon() {
+    console.log("Game 1 - userId:", user.id);
 
-  try {
-    const response = await fetch('https://inceptia.onrender.com/incrementWinCount', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ userId: user.id, gameNumber: 1 }),
-    });
+    try {
+      const response = await fetch(
+        "https://inceptia.onrender.com/incrementWinCount",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ userId: user.id, gameNumber: 1 }),
+        }
+      );
 
-    const data = await response.json();
-    console.log("Game 1 - Server Response:", data);
-  } catch (error) {
-    console.error('Game 1 - Error updating win count on the server:', error);
+      if (response.ok) {
+        const data = await response.json();
+        console.log("Game 1 - Server Response:", data);
+
+        // Open the modal only if the request was successful
+        openModal();
+      } else {
+        console.error(
+          "Game 1 - Error updating win count on the server:",
+          response.statusText
+        );
+      }
+    } catch (error) {
+      console.error("Game 1 - Error updating win count on the server:", error);
+    }
   }
 
-  // Open the modal
-  openModal();
-}
-
   async function closeModal() {
+    setInitiateTransaction(true);
     await handleCalculateRewards();
     setIsOpen(false);
     resetGame();
@@ -102,7 +147,7 @@ async function handleGameWon() {
     setIsOpen(true);
   }
 
-  console.log(user)
+  console.log(user);
 
   function handleAddCoin() {
     window.ethereum
@@ -131,8 +176,7 @@ async function handleGameWon() {
 
   const handleCalculateRewards = async () => {
     try {
-      const rewardAmountWei = ethers.utils.parseUnits("1", 0); // 1 token in wei
-
+      const rewardAmountWei = ethers.utils.parseUnits("1", 0);
       // Call the contract's calculateRewards function
       const transaction = await state.contract.calculateRewards(
         rewardAmountWei,
@@ -177,8 +221,9 @@ async function handleGameWon() {
       const firstIndex = activeCards[0];
       const secondsIndex = index;
       if (cards[firstIndex] === cards[secondsIndex]) {
+        // foundPairs.length <= 1
         // foundPairs.length + 2 === cards.length
-        if (foundPairs.length <= 1) {
+        if (foundPairs.length + 2 === cards.length) {
           setIsGameWon(true);
           await handleGameWon();
         }
@@ -252,14 +297,14 @@ async function handleGameWon() {
     } else if (timer === 0 && !isGameWon && !isGameOver) {
       // Player lost the game
       setIsGameOver(true);
-      alert("You lost the game");
+      setIsLost(true);
       // Optionally, you can add additional logic here to disable further gameplay.
     }
   }, [timer, isGameWon, isGameOver]);
 
   return (
     <div>
-      <Navbar/>
+      <Navbar />
       {/* <button onClick={openModal}>Show modal</button> */}
       <div className="board">
         {cards.map((card, index) => {
@@ -285,7 +330,7 @@ async function handleGameWon() {
       <div className="mt-5">
         {balance !== null && (
           <div className="bal">
-            <p>Balance is {balance} INCEPTIA</p>
+            <p>Balance is {parseInt(balance)} INCEPTIA</p>
           </div>
         )}
       </div>
@@ -319,11 +364,11 @@ async function handleGameWon() {
                     as="h3"
                     className="text-lg font-medium leading-6 text-gray-900"
                   >
-                    Payment successful
+                    Get reward.
                   </Dialog.Title>
                   <div className="mt-2">
                     <p className="text-sm text-gray-500">
-                      You have won the game your score is {score}.{" "}
+                      You have won the game.
                     </p>
                   </div>
 
@@ -332,6 +377,7 @@ async function handleGameWon() {
                       type="button"
                       className="inline-flex justify-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
                       onClick={closeModal}
+                      disabled={initiateTransaction}
                     >
                       Got it, thanks!
                     </button>
@@ -397,7 +443,62 @@ async function handleGameWon() {
           </div>
         </Dialog>
       </Transition>
-      <Footer/>
+      <Transition appear show={isLost} as={Fragment}>
+        <Dialog as="div" className="relative z-10" onClose={closeModal}>
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-black bg-opacity-25" />
+          </Transition.Child>
+
+          <div className="fixed inset-0 overflow-y-auto">
+            <div className="flex min-h-full items-center justify-center p-4 text-center">
+              <Transition.Child
+                as={Fragment}
+                enter="ease-out duration-300"
+                enterFrom="opacity-0 scale-95"
+                enterTo="opacity-100 scale-100"
+                leave="ease-in duration-200"
+                leaveFrom="opacity-100 scale-100"
+                leaveTo="opacity-0 scale-95"
+              >
+                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+                  <Dialog.Title
+                    as="h3"
+                    className="text-lg font-medium leading-6 text-gray-900"
+                  >
+                    You lost.
+                  </Dialog.Title>
+                  <div className="mt-2">
+                    <p className="text-sm text-gray-500">
+                      You have lost the game.
+                    </p>
+                  </div>
+
+                  <div className="mt-4">
+                    <button
+                      type="button"
+                      className="inline-flex justify-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                      onClick={() => {
+                        navigate("/games");
+                      }}
+                    >
+                      Got it, thanks!
+                    </button>
+                  </div>
+                </Dialog.Panel>
+              </Transition.Child>
+            </div>
+          </div>
+        </Dialog>
+      </Transition>
+      <Footer />
     </div>
   );
 }

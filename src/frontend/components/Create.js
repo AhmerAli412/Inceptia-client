@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ethers } from "ethers";
 import Footer from "../../components/Footer";
 import Navbar from "../../components/Navbar";
+import { ToastContainer, toast } from "react-toastify";
 
 const Create = ({ marketplace, nft }) => {
   const [fileImg, setFile] = useState(null);
@@ -34,6 +35,7 @@ const Create = ({ marketplace, nft }) => {
     } catch (error) {
       console.log("JSON to IPFS: ");
       console.log(error);
+      toast.error("Error creating NFT. Please try again later.");
     }
   };
 
@@ -63,23 +65,50 @@ const Create = ({ marketplace, nft }) => {
       } catch (error) {
         console.log("File to IPFS: ");
         console.log(error);
+        toast.error("Error creating NFT. Please try again later.");
         setIsCreating(false); // Make sure to set isCreating to false on error as well
       }
     }
   };
 
   const mintThenList = async (uri) => {
-    await (await nft.mint(uri)).wait();
-    const id = await nft.tokenCount();
-    // await (await nft.setApprovalForAll(marketplace.address, true)).wait()
-    // const listingPrice = price;
-    // await (await marketplace.makeItem(nft.address, id, listingPrice)).wait();
-    setIsCreating(false); // Set isCreating to false after the process is complete
-    // Clear the form input data
-    setFile(null);
-    setName("");
-    setDescription("");
-    setPrice("");
+    try {
+      // Mint NFT
+      const mintTx = await nft.mint(uri);
+      await mintTx.wait();
+
+      // Get the token ID
+      const id = await nft.tokenCount();
+
+      // Set approval for the marketplace (if needed)
+      // Uncomment the following lines if setApprovalForAll is required
+      // await (await nft.setApprovalForAll(marketplace.address, true)).wait();
+
+      // Set the listing price (if needed)
+      // Uncomment the following lines if makeItem is required
+      // const listingPrice = price;
+      // await (await marketplace.makeItem(nft.address, id, listingPrice)).wait();
+
+      // Set isCreating to false after the process is complete
+      setIsCreating(false);
+
+      // Clear the form input data
+      setFile(null);
+      setName("");
+      setDescription("");
+      setPrice("");
+
+      // Show success toast
+      toast.success("NFT created successfully!");
+    } catch (error) {
+      console.error("Minting and Listing error:", error);
+
+      // Set isCreating to false on error
+      setIsCreating(false);
+
+      // Show error toast
+      toast.error("Error creating NFT. Please try again later.");
+    }
   };
 
   return (
@@ -123,15 +152,7 @@ const Create = ({ marketplace, nft }) => {
               className="border py-2 px-3 rounded-lg focus:outline-none focus:ring focus:border-blue-300 w-full"
             />
           </div>
-          <div className="mb-4">
-            <input
-              type="number"
-              placeholder="Price in INC"
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
-              className="border py-2 px-3 rounded-lg focus:outline-none focus:ring focus:border-blue-300 w-full"
-            />
-          </div>
+
           <div className="text-center">
             <button
               onClick={sendFileToIPFS}
@@ -150,6 +171,7 @@ const Create = ({ marketplace, nft }) => {
           </div>
         </form>
       </div>
+      <ToastContainer />
       <Footer />
     </>
   );

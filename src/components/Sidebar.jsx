@@ -15,6 +15,7 @@ import Banner from "./Banner";
 import Collections from "./Collections";
 import Stats from "./Stats";
 import Testimonials from "./Testimonials";
+import Icons from "./Icons";
 
 function Sidebar() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -150,8 +151,9 @@ function Sidebar() {
 
       
 <Banner/>
-<Collections/>
-<Stats/>
+<Icons/>
+{/* <Collections/> */}
+{/* <Stats/> */}
 <Testimonials/>
 {/* <Pricing/> */}
       <Footer/>

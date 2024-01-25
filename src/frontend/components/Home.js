@@ -6,12 +6,14 @@ import { AiFillHeart, AiOutlineHeart } from "react-icons/ai";
 import HeroSection from "./HeroSection";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
+import { toast } from "react-toastify";
 
 const Home = ({ marketplace, nft, account, inceptia }) => {
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState([]);
   const [like, setLike] = useState(true);
   const [buyingState, setBuyingState] = useState({});
+  const [LinkedNFT, setLinkedNFT] = useState(0);
 
   const likeNft = () => {
     if (!like) {
@@ -32,6 +34,8 @@ const Home = ({ marketplace, nft, account, inceptia }) => {
         const response = await fetch(uri);
         const metadata = await response.json();
         const totalPrice = await marketplace.getTotalPrice(item.itemId);
+        const level = await nft.getTokenLevel(item.tokenId);
+
         items.push({
           totalPrice,
           itemId: item.itemId,
@@ -39,6 +43,7 @@ const Home = ({ marketplace, nft, account, inceptia }) => {
           name: metadata.name,
           description: metadata.description,
           image: metadata.image,
+          level: level.toNumber(),
         });
       }
     }
@@ -49,7 +54,7 @@ const Home = ({ marketplace, nft, account, inceptia }) => {
   const buyMarketItem = async (item) => {
     try {
       console.log(inceptia);
-      setBuyingState((prev) => ({ ...prev, [item.itemId]: true })); // Set buying state for the specific NFT to true
+      setBuyingState((prev) => ({ ...prev, [item.itemId]: true }));
 
       await (
         await inceptia.approve(
@@ -59,9 +64,11 @@ const Home = ({ marketplace, nft, account, inceptia }) => {
       ).wait();
       await (await nft.setApprovalForAll(marketplace["address"], true)).wait();
       await (await marketplace.purchaseItem(item.itemId)).wait();
+      toast.success("Item bought successfully");
       loadMarketplaceItems();
     } catch (error) {
       console.error("Error buying item:", error);
+      toast.error("Error buying item");
     } finally {
       setBuyingState((prev) => ({ ...prev, [item.itemId]: false })); // Set buying state for the specific NFT to false after the transaction
     }
@@ -81,7 +88,7 @@ const Home = ({ marketplace, nft, account, inceptia }) => {
   return (
     <>
       <div>
-        <Navbar />
+        {/* <Navbar /> */}
         <HeroSection />
       </div>
 
@@ -127,6 +134,9 @@ const Home = ({ marketplace, nft, account, inceptia }) => {
                       <small>{item.description}</small>
                       <p>{item.totalPrice.toString()} INC</p>
                     </div>
+
+                    <div className="level-badge">Level {item.level}</div>
+
                     <div
                       className={
                         Style.NFTCard_box_update_details_price_box_stock
@@ -139,20 +149,23 @@ const Home = ({ marketplace, nft, account, inceptia }) => {
                 <BsImages />
               </div>
             </div>
-            <button
-              onClick={() => buyMarketItem(item)}
-              className={`${Style.NFTCard_box_buy_button} mt-5`}
-              style={{
-                background:
-                  "linear-gradient(90deg, rgba(50,168,56,1) 0%, rgba(50,168,56,1) 50%, rgba(87,194,33,1) 50%, rgba(87,194,33,1) 100%)",
-                cursor: buyingState[item.itemId] ? "not-allowed" : "pointer", // Disable the button and change cursor based on the specific NFT's buying state
-                opacity: buyingState[item.itemId] ? 0.7 : 1, // Reduce opacity based on the specific NFT's buying state
-              }}
-              disabled={buyingState[item.itemId]} // Disable the button based on the specific NFT's buying state
-            >
-              {buyingState[item.itemId] ? "Buying..." : "Buy"}{" "}
-              {/* Display "Buying" or "Buy" based on the specific NFT's buying state */}
-            </button>
+            {item.seller !== account ? (
+              <button
+                onClick={() => buyMarketItem(item)}
+                className={`${Style.NFTCard_box_buy_button} mt-5`}
+                style={{
+                  background:
+                    "linear-gradient(90deg, rgba(50,168,56,1) 0%, rgba(50,168,56,1) 50%, rgba(87,194,33,1) 50%, rgba(87,194,33,1) 100%)",
+                  cursor: buyingState[item.itemId] ? "not-allowed" : "pointer",
+                  opacity: buyingState[item.itemId] ? 0.7 : 1,
+                }}
+                disabled={buyingState[item.itemId]}
+              >
+                {buyingState[item.itemId] ? "Buying..." : "Buy"}
+              </button>
+            ) : (
+              ""
+            )}
           </div>
         ))}
       </div>

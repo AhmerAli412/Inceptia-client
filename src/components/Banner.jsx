@@ -1,4 +1,5 @@
 import React from 'react'
+import { Link } from 'react-router-dom'
 
 const Banner = () => {
   return (
@@ -8,12 +9,12 @@ const Banner = () => {
     <div class="flex flex-col overflow-hidden rounded-lg bg-gray-900 sm:flex-row md:h-80">
     
       <div class="flex w-full flex-col p-4 sm:w-1/2 sm:p-8 lg:w-2/5">
-        <h2 class="mb-4 text-xl font-bold text-white md:text-2xl lg:text-4xl">Booster Sale<br />Up to 70% off.</h2>
+        <h2 class="mb-4 text-xl font-bold text-white md:text-2xl lg:text-4xl">Boost Your Way earn<br /> Faster and Stack Up Rewards</h2>
 
         <p class="mb-8 max-w-md text-gray-400">Get your booster now to acheive maximum inceptia rewards. The offer is for limited time so get your booster as soon as possible.</p>
 
-        <div class="mt-auto">
-          <a href="#" class="inline-block rounded-lg bg-white px-8 py-3 text-center text-sm font-semibold text-gray-800 outline-none ring-indigo-300 transition duration-100 hover:bg-gray-100 focus-visible:ring active:bg-gray-200 md:text-base">Get now</a>
+        <div class="mb-3">
+          <Link to="/pricing" className="inline-block cursor-pointer rounded-lg bg-white px-8 py-3 text-center text-sm font-semibold text-gray-800 outline-none ring-indigo-300 transition duration-100 hover:bg-gray-100 focus-visible:ring active:bg-gray-200 md:text-base">Get now</Link>
         </div>
       </div>
      

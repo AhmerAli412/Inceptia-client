@@ -14,6 +14,8 @@ import {
   inceptiaContractAddress,
   inceptiaAbi,
 } from "../contract/index";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const Games = () => {
   const [isVisible, setIsVisible] = useState(false);
@@ -71,10 +73,11 @@ const Games = () => {
         console.log(inceptiaContract);
         setInceptiaContract(inceptiaContract);
       } else {
-        alert("Please install MetaMask");
+        toast("Please install metamask");
       }
     } catch (error) {
       console.error("Error connecting wallet:", error);
+      toast.error("Error connecting wallet");
     }
   };
 
@@ -114,15 +117,42 @@ const Games = () => {
       // Continue with the rest of your game logic
     } catch (error) {
       console.error("Error handling game:", error);
+      toast.error("Error playing game");
     }
   }
-
   return (
     <>
       <Navbar />
       <Hh />
       <div className="main">
-        <div className="hero mb-0" style={{ backgroundColor: "#1a1c1f" }}>
+        <div
+          className="hero mb-0 relative isolate"
+          style={{ backgroundColor: "#1a1c1f" }}
+        >
+          <div
+            className="absolute inset-x-0 top-1/2 -z-10 -translate-y-1/2 transform-gpu overflow-hidden opacity-30 blur-3xl"
+            aria-hidden="true"
+          >
+            <div
+              className="ml-[max(50%,38rem)] aspect-[1313/771] w-[82.0625rem] bg-gradient-to-tr from-[#949c96] to-[#1ac583]"
+              style={{
+                clipPath:
+                  "polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)",
+              }}
+            ></div>
+          </div>
+          <div
+            className="absolute inset-x-0 top-0 -z-10 flex transform-gpu overflow-hidden pt-32 opacity-25 blur-3xl sm:pt-40 xl:justify-end"
+            aria-hidden="true"
+          >
+            <div
+              className="ml-[-22rem] aspect-[1313/771] w-[82.0625rem] flex-none origin-top-right rotate-[30deg] bg-gradient-to-tr from-[#949c96] to-[#1ac583] xl:ml-0 xl:mr-[calc(50%-12rem)]"
+              style={{
+                clipPath:
+                  "polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)",
+              }}
+            ></div>
+          </div>
           <div
             className={`hero-content flex-col lg:flex-row transition-opacity duration-1000 ${
               isVisible ? "opacity-100" : "opacity-0"
@@ -142,33 +172,32 @@ const Games = () => {
               <div>
                 <ul className="steps steps-vertical">
                   <li
-                    className="step-base-content"
+                    className="step step-base-content"
                     style={{ color: "#57c221" }}
                   >
-                    Chess is a classic strategy game that challenges players'
-                    tactical prowess and foresight.
+                    Match pairs of identical cards hidden on a grid.
                   </li>
                   <li
-                    className="step-base-content"
+                    className="step step-base-content"
                     style={{ color: "#57c221" }}
                   >
-                    Players race their four tokens from start.
+                    Remember the position of cards to make successful matches.
                   </li>
                   <li
-                    className="step-base-content"
+                    className="step step-base-content"
                     style={{ color: "#57c221" }}
                   >
-                    Checkmate your opponent's King, a feat achieved through
-                    calculated moves and well-thought-out strategies.
+                    Players use memory and pattern recognition to match pairs
+                    efficiently.
                   </li>
                   <li
-                    className="step-base-content"
+                    className="step step-base-content"
                     style={{ color: "#57c221" }}
                   >
                     User can get INC rewards in return.
                   </li>
                   <li
-                    className="step-base-content"
+                    className="step step-base-content"
                     style={{ color: "#57c221" }}
                   >
                     User have to complete this game in specified time
@@ -181,7 +210,7 @@ const Games = () => {
                       color: "#fff",
                     }}
                   >
-                    <Link to="/memorygame">Play Now1</Link>
+                    <Link to="/memorygame">Play Now </Link>
                   </button>
                 </ul>
               </div>
@@ -208,20 +237,20 @@ const Games = () => {
                   className="step step-base-content"
                   style={{ color: "#57c221" }}
                 >
-                  Ludo is a board game played with 2-4 players.
+                  Arrange a sequence of numbers in ascending order by shifting
+                  them within a grid.
                 </li>
                 <li
                   className="step step-base-content"
                   style={{ color: "#57c221" }}
                 >
-                  Players race their four tokens from start.
+                  One empty cell allows adjacent numbers to shift into it.
                 </li>
                 <li
                   className="step step-base-content"
                   style={{ color: "#57c221" }}
                 >
-                  Tokens must make a full circuit of the board to reach the
-                  finish line.
+                  Players select a number adjacent to the empty slot to move it.
                 </li>
                 <li
                   className="step step-base-content"
@@ -242,16 +271,17 @@ const Games = () => {
                       "linear-gradient(90deg, rgba(50,168,56,1) 0%, rgba(50,168,56,1) 50%, rgba(87,194,33,1) 50%, rgba(87,194,33,1) 100%)",
                     color: "#fff",
                   }}
-                  onClick={() => {
-                    handlePlayGame(2);
-                  }}
+                  // onClick={() => {
+                  //   handlePlayGame(2);
+                  // }}
                 >
-                  <Link to="/board">Play Now2</Link>
+                  <Link to="/board">Play Now </Link>
                 </button>{" "}
               </ul>
             </div>
           </div>
         </div>
+
         <div className="" style={{ backgroundColor: "#1a1c1f" }}>
           <div className="hero" style={{ backgroundColor: "#1a1c1f" }}>
             <div
@@ -317,7 +347,7 @@ const Games = () => {
                       }}
                     >
                       {transaction3 ? (
-                        <Link to="/game2048">Play Now 3</Link>
+                        <Link to="/game2048">Play Now </Link>
                       ) : (
                         "Pay to play"
                       )}
@@ -329,6 +359,7 @@ const Games = () => {
           </div>
         </div>
       </div>
+      <ToastContainer />
       <Footer />
     </>
   );

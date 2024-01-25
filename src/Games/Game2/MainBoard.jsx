@@ -10,11 +10,11 @@ const MainBoard = () => {
 
   return (
     <div className='App'>
-    <header className="App-header1">
+    {/* <header className="App-header1"> */}
    
     <Board userId={user.id} gameNumber={2} />
 
-        </header>
+        {/* </header> */}
     </div>
   )
 }
